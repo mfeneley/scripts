@@ -4,7 +4,7 @@
 #
 # Encrypts a folder using gpg2 AES256 cipher. The encrypted file is then 
 # split into smaller pieces and placed in a subdirectory called archive. 
-# The file can be reassembled and decrypted using the decrypt-master command. 
+# The file can be reassembled and decrypted using the decrypt-master script. 
 #  
 
 
