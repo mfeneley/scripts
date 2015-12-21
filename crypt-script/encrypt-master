@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# file: encrypt-master
+#
+# Encrypts a folder using gpg2 AES256 cipher. The encrypted file is then 
+# split into smaller pieces and placed in a subdirectory called archive. 
+# The file can be reassembled and decrypted using the decrypt-master command. 
+#  
+
+
+command -v  gpg2 > /dev/null && echo "found gpg2"  || { echo "Install gpg2" exit 1;}
+command -v tar > /dev/null && echo "found tar" || { echo "Install tar" exit 1;}
+command -v split > /dev/null && echo "found split" || { echo "Install split" exit 1;}
+
+if [ -d archive ]; then
+    echo "Directory named archive already exists"
+    exit 1
+fi
+mkdir archive
+
+read -p "Enter folder name " folder
+archive="master_$folder"
+
+tar -cf $archive $folder
+if [ $? -ne 0 ]; then
+    echo "Tar failed"
+    rm "master_$folder"
+    rm -r archive
+    exit 1
+fi
+
+gpg2 --symmetric --cipher-algo AES256 $archive
+if [ $? -ne 0 ]; then
+    echo "gpg2 failed"
+    rm "master_$folder"
+    rm "master_$folder.gpg"
+    rm -r archive
+    exit 1
+fi
+
+read -p "Enter split file size " size
+if [ "$size" == "" ]; then
+    echo "Using default of 1000"
+    size="1000"
+fi
+
+split -b $size "$archive.gpg" ./archive/master_archive_
+if [ $? -ne 0 ]; then
+    echo "split failed"
+    rm "master_$folder"
+    rm "master_$folder.gpg"
+    rm "master_archive_*"
+    rm -r archive
+    exit 1
+fi     
+
+rm "master_$folder"
+rm "master_$folder.gpg"
+cp encrypt-master archive
+cp decrypt-master archive
